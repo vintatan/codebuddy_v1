@@ -45,12 +45,22 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import Confetti from "react-confetti"
+import Image from "next/image"
+
+// Add new interfaces for assessment
+interface AssessmentResult {
+  score: number
+  weakAreas: string[]
+  recommendedTopics: string[]
+  gradeLevel: 1 | 2 | 3 | 4 | 5 | 6
+}
 
 // User profile type
 interface UserProfile {
   gradeLevel?: 1 | 2 | 3 | 4 | 5 | 6
   goals?: string[]
   interests?: string[]
+  assessmentResult?: AssessmentResult
 }
 
 // Message with image support
@@ -187,133 +197,191 @@ export default function Lessons() {
     }
   }, [showConfetti])
 
-  // Generate recommended problems
+  // Modify generateRecommendedProblems to use assessment results
   const generateRecommendedProblems = (gradeLevel: number, topic?: string) => {
-    // Sample problems based on grade level
     const problems: MathProblem[] = []
+    
+    // Use assessment results to customize problems
+    if (userProfile.assessmentResult) {
+      const { weakAreas, recommendedTopics } = userProfile.assessmentResult
+      
+      // Generate more problems for weak areas
+      weakAreas.forEach(area => {
+        problems.push({
+          id: `${area}-practice-${Date.now()}`,
+          statement: generateProblemForTopic(area, gradeLevel),
+          difficulty: "medium",
+          topic: area,
+          status: "unsolved",
+          solution: calculateSolution(area, gradeLevel),
+        })
+      })
 
-    // Number & Algebra problems
-    problems.push({
-      id: `na-${gradeLevel}-1`,
-      statement:
-        gradeLevel <= 2
-          ? `What is ${gradeLevel * 5} + ${gradeLevel * 3}?`
-          : gradeLevel <= 4
-            ? `What is ${gradeLevel * 25} + ${gradeLevel * 37}?`
-            : `Solve for x: ${gradeLevel}x + ${gradeLevel * 2} = ${gradeLevel * 7}`,
-      difficulty: "easy",
-      topic: "numbers",
-      status: "unsolved",
-      solution:
-        gradeLevel <= 2
-          ? `${gradeLevel * 5 + gradeLevel * 3}`
-          : gradeLevel <= 4
-            ? `${gradeLevel * 25 + gradeLevel * 37}`
-            : `${(gradeLevel * 7 - gradeLevel * 2) / gradeLevel}`,
-    })
+      // Add some problems from recommended topics
+      recommendedTopics.forEach(topic => {
+        if (!weakAreas.includes(topic)) {
+          problems.push({
+            id: `${topic}-practice-${Date.now()}`,
+            statement: generateProblemForTopic(topic, gradeLevel),
+            difficulty: "easy",
+            topic: topic,
+            status: "unsolved",
+            solution: calculateSolution(topic, gradeLevel),
+          })
+        }
+      })
+    }
 
-    problems.push({
-      id: `na-${gradeLevel}-2`,
-      statement:
-        gradeLevel <= 2
-          ? `What is ${gradeLevel * 4} × ${gradeLevel}?`
-          : gradeLevel <= 4
-            ? `What is ${gradeLevel * 7} × ${gradeLevel * 8}?`
-            : `If x = ${gradeLevel * 2} and y = ${gradeLevel * 3}, what is the value of ${gradeLevel}x - 2y?`,
-      difficulty: "medium",
-      topic: "numbers",
-      status: "unsolved",
-      solution:
-        gradeLevel <= 2
-          ? `${gradeLevel * 4 * gradeLevel}`
-          : gradeLevel <= 4
-            ? `${gradeLevel * 7 * gradeLevel * 8}`
-            : `${gradeLevel * (gradeLevel * 2) - 2 * (gradeLevel * 3)}`,
-    })
-
-    // Measurement problems
-    problems.push({
-      id: `m-${gradeLevel}-1`,
-      statement:
-        gradeLevel <= 2
-          ? `A pencil is ${gradeLevel * 5} cm long. A ruler is ${gradeLevel * 10} cm long. How much longer is the ruler than the pencil?`
-          : gradeLevel <= 4
-            ? `A rectangle has length ${gradeLevel * 6} cm and width ${gradeLevel * 4} cm. What is its area?`
-            : `A rectangular prism has length ${gradeLevel * 3} cm, width ${gradeLevel * 2} cm, and height ${gradeLevel} cm. What is its volume?`,
-      difficulty: "medium",
-      topic: "measurement",
-      status: "unsolved",
-      solution:
-        gradeLevel <= 2
-          ? `${gradeLevel * 10 - gradeLevel * 5} cm`
-          : gradeLevel <= 4
-            ? `${gradeLevel * 6 * gradeLevel * 4} square cm`
-            : `${gradeLevel * 3 * gradeLevel * 2 * gradeLevel} cubic cm`,
-    })
-
-    // Fractions problems
-    if (gradeLevel >= 3) {
+    // If no assessment results or need more problems, add default ones
+    if (problems.length < 5) {
+      // Number & Algebra problems
       problems.push({
-        id: `f-${gradeLevel}-1`,
+        id: `na-${gradeLevel}-1`,
         statement:
-          gradeLevel <= 4
-            ? `What is 1/${gradeLevel} + 2/${gradeLevel}?`
-            : `What is ${gradeLevel - 2}/${gradeLevel} - 1/${gradeLevel * 2}?`,
+          gradeLevel <= 2
+            ? `What is ${gradeLevel * 5} + ${gradeLevel * 3}?`
+            : gradeLevel <= 4
+              ? `What is ${gradeLevel * 25} + ${gradeLevel * 37}?`
+              : `Solve for x: ${gradeLevel}x + ${gradeLevel * 2} = ${gradeLevel * 7}`,
+        difficulty: "easy",
+        topic: "numbers",
+        status: "unsolved",
+        solution:
+          gradeLevel <= 2
+            ? `${gradeLevel * 5 + gradeLevel * 3}`
+            : gradeLevel <= 4
+              ? `${gradeLevel * 25 + gradeLevel * 37}`
+              : `${(gradeLevel * 7 - gradeLevel * 2) / gradeLevel}`,
+      })
+
+      problems.push({
+        id: `na-${gradeLevel}-2`,
+        statement:
+          gradeLevel <= 2
+            ? `What is ${gradeLevel * 4} × ${gradeLevel}?`
+            : gradeLevel <= 4
+              ? `What is ${gradeLevel * 7} × ${gradeLevel * 8}?`
+              : `If x = ${gradeLevel * 2} and y = ${gradeLevel * 3}, what is the value of ${gradeLevel}x - 2y?`,
         difficulty: "medium",
-        topic: "fractions",
+        topic: "numbers",
         status: "unsolved",
-        solution: gradeLevel <= 4 ? `3/${gradeLevel}` : `${(gradeLevel - 2) * 2 - 1}/${gradeLevel * 2}`,
+        solution:
+          gradeLevel <= 2
+            ? `${gradeLevel * 4 * gradeLevel}`
+            : gradeLevel <= 4
+              ? `${gradeLevel * 7 * gradeLevel * 8}`
+              : `${gradeLevel * (gradeLevel * 2) - 2 * (gradeLevel * 3)}`,
       })
 
+      // Measurement problems
       problems.push({
-        id: `f-${gradeLevel}-2`,
+        id: `m-${gradeLevel}-1`,
         statement:
-          gradeLevel <= 4
-            ? `What is 1/2 of ${gradeLevel * 6}?`
-            : `What is ${gradeLevel - 1}/${gradeLevel} of ${gradeLevel * 15}?`,
-        difficulty: "hard",
-        topic: "fractions",
+          gradeLevel <= 2
+            ? `A pencil is ${gradeLevel * 5} cm long. A ruler is ${gradeLevel * 10} cm long. How much longer is the ruler than the pencil?`
+            : gradeLevel <= 4
+              ? `A rectangle has length ${gradeLevel * 6} cm and width ${gradeLevel * 4} cm. What is its area?`
+              : `A rectangular prism has length ${gradeLevel * 3} cm, width ${gradeLevel * 2} cm, and height ${gradeLevel} cm. What is its volume?`,
+        difficulty: "medium",
+        topic: "measurement",
         status: "unsolved",
-        solution: gradeLevel <= 4 ? `${(gradeLevel * 6) / 2}` : `${(gradeLevel - 1) * 15}`,
+        solution:
+          gradeLevel <= 2
+            ? `${gradeLevel * 10 - gradeLevel * 5} cm`
+            : gradeLevel <= 4
+              ? `${gradeLevel * 6 * gradeLevel * 4} square cm`
+              : `${gradeLevel * 3 * gradeLevel * 2 * gradeLevel} cubic cm`,
       })
-    }
 
-    // Geometry problems
-    problems.push({
-      id: `g-${gradeLevel}-1`,
-      statement:
-        gradeLevel <= 2
-          ? `How many sides does a triangle have?`
-          : gradeLevel <= 4
-            ? `What is the perimeter of a square with side length ${gradeLevel * 2} cm?`
-            : `What is the area of a circle with radius ${gradeLevel} cm? (Use π = 3.14)`,
-      difficulty: gradeLevel <= 2 ? "easy" : "hard",
-      topic: "geometry",
-      status: "unsolved",
-      solution:
-        gradeLevel <= 2
-          ? `3`
-          : gradeLevel <= 4
-            ? `${gradeLevel * 2 * 4} cm`
-            : `${Math.round(3.14 * gradeLevel * gradeLevel * 100) / 100} square cm`,
-    })
+      // Fractions problems
+      if (gradeLevel >= 3) {
+        problems.push({
+          id: `f-${gradeLevel}-1`,
+          statement:
+            gradeLevel <= 4
+              ? `What is 1/${gradeLevel} + 2/${gradeLevel}?`
+              : `What is ${gradeLevel - 2}/${gradeLevel} - 1/${gradeLevel * 2}?`,
+          difficulty: "medium",
+          topic: "fractions",
+          status: "unsolved",
+          solution: gradeLevel <= 4 ? `3/${gradeLevel}` : `${(gradeLevel - 2) * 2 - 1}/${gradeLevel * 2}`,
+        })
 
-    // Data problems for higher grades
-    if (gradeLevel >= 4) {
+        problems.push({
+          id: `f-${gradeLevel}-2`,
+          statement:
+            gradeLevel <= 4
+              ? `What is 1/2 of ${gradeLevel * 6}?`
+              : `What is ${gradeLevel - 1}/${gradeLevel} of ${gradeLevel * 15}?`,
+          difficulty: "hard",
+          topic: "fractions",
+          status: "unsolved",
+          solution: gradeLevel <= 4 ? `${(gradeLevel * 6) / 2}` : `${(gradeLevel - 1) * 15}`,
+        })
+      }
+
+      // Geometry problems
       problems.push({
-        id: `d-${gradeLevel}-1`,
-        statement: `The average of ${gradeLevel} numbers is ${gradeLevel * 5}. What is their sum?`,
-        difficulty: "hard",
-        topic: "data",
+        id: `g-${gradeLevel}-1`,
+        statement:
+          gradeLevel <= 2
+            ? `How many sides does a triangle have?`
+            : gradeLevel <= 4
+              ? `What is the perimeter of a square with side length ${gradeLevel * 2} cm?`
+              : `What is the area of a circle with radius ${gradeLevel} cm? (Use π = 3.14)`,
+        difficulty: gradeLevel <= 2 ? "easy" : "hard",
+        topic: "geometry",
         status: "unsolved",
-        solution: `${gradeLevel * gradeLevel * 5}`,
+        solution:
+          gradeLevel <= 2
+            ? `3`
+            : gradeLevel <= 4
+              ? `${gradeLevel * 2 * 4} cm`
+              : `${Math.round(3.14 * gradeLevel * gradeLevel * 100) / 100} square cm`,
       })
+
+      // Data problems for higher grades
+      if (gradeLevel >= 4) {
+        problems.push({
+          id: `d-${gradeLevel}-1`,
+          statement: `The average of ${gradeLevel} numbers is ${gradeLevel * 5}. What is their sum?`,
+          difficulty: "hard",
+          topic: "data",
+          status: "unsolved",
+          solution: `${gradeLevel * gradeLevel * 5}`,
+        })
+      }
     }
 
-    // Filter by topic if specified
     const filteredProblems = topic ? problems.filter((p) => p.topic === topic) : problems
-
     setRecommendedProblems(filteredProblems)
+  }
+
+  // Add helper functions for problem generation
+  const generateProblemForTopic = (topic: string, grade: number): string => {
+    // Add logic to generate problems based on topic and grade
+    switch (topic) {
+      case "numbers":
+        return `What is ${grade * 5} + ${grade * 3}?`
+      case "fractions":
+        return `What is ${grade - 1}/${grade} of ${grade * 10}?`
+      // ... add more cases
+      default:
+        return `Solve: ${grade * 2} + ${grade * 3}`
+    }
+  }
+
+  const calculateSolution = (topic: string, grade: number): string => {
+    // Add logic to calculate solutions
+    switch (topic) {
+      case "numbers":
+        return `${grade * 5 + grade * 3}`
+      case "fractions":
+        return `${(grade - 1) * 10}`
+      // ... add more cases
+      default:
+        return `${grade * 5}`
+    }
   }
 
   // Analyze messages to extract learning context and user profile info
@@ -1020,11 +1088,22 @@ export default function Lessons() {
                         }`}
                       >
                         <div
-                          className={`p-2 rounded-full ${
-                            message.role === "assistant" ? "bg-primary text-primary-foreground" : "bg-muted"
+                          className={`w-8 h-8 rounded-full overflow-hidden flex items-center justify-center ${
+                            message.role === "assistant" ? "bg-primary" : "bg-muted"
                           }`}
                         >
-                          {message.role === "assistant" ? <Bot className="h-5 w-5" /> : <User className="h-5 w-5" />}
+                          {message.role === "assistant" ? (
+                            <Image
+                              src="/robot.png"
+                              alt="AI Assistant"
+                              width={32}
+                              height={32}
+                              className="object-cover"
+                              priority
+                            />
+                          ) : (
+                            <User className="h-5 w-5" />
+                          )}
                         </div>
                         <div
                           className={`flex-1 px-4 py-2 rounded-lg ${

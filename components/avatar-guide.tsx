@@ -24,7 +24,7 @@ export function AvatarGuide({ message, className }: AvatarGuideProps) {
       <CardContent className="p-6 flex items-center gap-4">
         <div className="relative w-16 h-16">
           <Image
-            src="/placeholder.svg"
+            src="/robot.png"
             alt="AI Tutor Avatar"
             width={64}
             height={64}
