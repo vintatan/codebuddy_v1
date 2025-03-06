@@ -55,22 +55,22 @@ const SidebarMenuItem = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HT
 SidebarMenuItem.displayName = "SidebarMenuItem"
 
 const SidebarMenuButton = React.forwardRef<
-  HTMLButtonElement,
-  React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  HTMLButtonElement | HTMLDivElement,
+  (React.ButtonHTMLAttributes<HTMLButtonElement> | React.HTMLAttributes<HTMLDivElement>) & {
     isActive?: boolean
-    asChild?: boolean
+    as?: "button" | "div"
   }
->(({ className, isActive, asChild = false, ...props }, ref) => {
-  const Comp = asChild ? "div" : "button"
+>(({ className, isActive, as = "button", ...props }, ref) => {
+  const Comp = as
   return (
     <Comp
-      ref={ref}
+      ref={ref as any}
       className={cn(
         "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
         isActive && "bg-accent text-accent-foreground",
         className,
       )}
-      {...props}
+      {...(props as any)}
     />
   )
 })
