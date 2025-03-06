@@ -162,7 +162,7 @@ export default function Lessons() {
         ...prev,
         ...newMessages.map((msg) => ({
           id: msg.id,
-          role: msg.role,
+          role: msg.role as "assistant" | "user",
           content: msg.content,
         })),
       ])
